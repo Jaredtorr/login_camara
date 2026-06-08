@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'session_manager.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,7 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   static const _platform = MethodChannel('com.example.logincamara/security');
 
-  // Solicita una ubicación fresca y verifica si es mock EN ESE MOMENTO
   Future<bool> _checkMockLocationNow() async {
     try {
       final result = await _platform.invokeMethod<bool>('isMockLocationActive');
@@ -31,13 +31,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final bool isFake = await _checkMockLocationNow();
-
       if (!mounted) return;
 
       if (isFake) {
         _showFakeGpsAlert();
+        return;
+      }
+
+      // ── Validar credenciales ──────────────────────────────────
+      final user = _userController.text.trim();
+      final pass = _passwordController.text;
+
+      if (user == 'admin' && pass == '1234') {
+        // Generar token y guardar en almacén encriptado
+        final token =
+            'TOKEN-${user.toUpperCase()}-${DateTime.now().millisecondsSinceEpoch}';
+        await SessionManager.saveSession(token);
+
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed('/home');
       } else {
-        _doLogin();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Usuario o contraseña incorrectos'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -58,10 +77,8 @@ class _LoginScreenState extends State<LoginScreen> {
             Icon(Icons.gps_off, color: Colors.red, size: 28),
             SizedBox(width: 8),
             Expanded(
-              child: Text(
-                'Ubicación falsa detectada',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-              ),
+              child: Text('Ubicación falsa detectada',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -77,13 +94,11 @@ class _LoginScreenState extends State<LoginScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              'Entendido',
-              style: TextStyle(
-                  color: Colors.deepPurple,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold),
-            ),
+            child: const Text('Entendido',
+                style: TextStyle(
+                    color: Colors.deepPurple,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -118,27 +133,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _doLogin() {
-    final user = _userController.text.trim();
-    final pass = _passwordController.text;
-
-    if (user == 'admin' && pass == '1234') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Inicio de sesión exitoso'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('❌ Usuario o contraseña incorrectos'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,10 +145,8 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const Icon(Icons.lock, size: 80, color: Colors.deepPurple),
               const SizedBox(height: 32),
-              const Text(
-                'Iniciar Sesión',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
+              const Text('Iniciar Sesión',
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
               const SizedBox(height: 32),
               TextField(
                 controller: _userController,
@@ -194,17 +186,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: _isChecking
                       ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                      : const Text(
-                    'Entrar',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                      : const Text('Entrar',
+                      style: TextStyle(fontSize: 16, color: Colors.white)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -213,10 +200,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Icon(Icons.location_on, size: 14, color: Colors.grey),
                   SizedBox(width: 4),
-                  Text(
-                    'Se verifica ubicación real al iniciar sesión',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
+                  Text('Se verifica ubicación real al iniciar sesión',
+                      style: TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
             ],
