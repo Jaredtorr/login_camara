@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -9,13 +10,15 @@ import 'home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializar Firebase
+  // Inicializar Firebase (todas las plataformas)
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Inicializar FCM (handlers, permisos, token)
-  await FcmService.init();
+  // FCM no está disponible en web
+  if (!kIsWeb) {
+    await FcmService.init();
+  }
 
   runApp(
     DevicePreview(
