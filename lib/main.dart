@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'fcm_service.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Inicializar FCM (handlers, permisos, token)
+  await FcmService.init();
+
   runApp(
     DevicePreview(
       enabled: true, // cambia a false para producción
@@ -20,7 +33,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Login Seguro',
       debugShowCheckedModeBanner: false,
-      useInheritedMediaQuery: true, // requerido por device_preview
+      useInheritedMediaQuery: true,
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
       theme: ThemeData(

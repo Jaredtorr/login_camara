@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'session_manager.dart';
+import 'secure_data_manager.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -46,7 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
         // Generar token y guardar en almacén encriptado
         final token =
             'TOKEN-${user.toUpperCase()}-${DateTime.now().millisecondsSinceEpoch}';
-        await SessionManager.saveSession(token);
+        // Guardar sesión con userId (usamos el nombre de usuario como ID)
+        await SecureDataManager.saveSession(token, user);
+        // Poblar automáticamente los 4 campos sensibles
+        await SecureDataManager.populateSensitiveData(user);
 
         if (!mounted) return;
         Navigator.of(context).pushReplacementNamed('/home');

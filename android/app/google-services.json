@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "666814214352",
+    "project_id": "logincamara-fcm",
+    "storage_bucket": "logincamara-fcm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:666814214352:android:7ee4e17a7cc02f7809eed5",
+        "android_client_info": {
+          "package_name": "com.example.logincamara"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDw2BlHg_LDMiMTNnwGlmjSE4aPrSfeB9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
