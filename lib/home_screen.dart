@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'secure_data_manager.dart';
 import 'session_manager.dart';
 
@@ -264,10 +265,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'FCM Token (ID del dispositivo)',
                 children: [
                   if (_fcmToken != null) ...[
-                    Text(
-                      _fcmToken!,
-                      style: const TextStyle(
-                          fontSize: 10, fontFamily: 'monospace', color: Colors.orange),
+                    GestureDetector(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: _fcmToken!));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Token copiado al portapapeles')),
+                        );
+                      },
+                      child: Text(
+                        _fcmToken!,
+                        style: const TextStyle(
+                            fontSize: 10, fontFamily: 'monospace', color: Colors.orange),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Container(

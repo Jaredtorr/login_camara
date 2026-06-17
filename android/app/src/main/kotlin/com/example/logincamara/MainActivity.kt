@@ -7,6 +7,7 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -26,19 +27,19 @@ class MainActivity : FlutterActivity() {
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
-                if (call.method == "isMockLocationActive") {
-                    requestFreshLocation(result)
-                } else {
-                    result.notImplemented()
+                when (call.method) {
+                    "isMockLocationActive" -> requestFreshLocation(result)
+                    "isAdbEnabled"          -> result.success(checkAdbEnabled())
+                    else -> result.notImplemented()
                 }
             }
     }
 
+    // ── Detección de Fake GPS (práctica anterior, sin cambios) ────
     private fun requestFreshLocation(result: MethodChannel.Result) {
         try {
             val locationManager =
                 getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
             val mainHandler = Handler(Looper.getMainLooper())
             var responded = false
 
@@ -47,43 +48,50 @@ class MainActivity : FlutterActivity() {
                     if (responded) return
                     responded = true
                     locationManager.removeUpdates(this)
-                    // TRUE si la ubicación viene de un proveedor simulado
                     result.success(location.isFromMockProvider)
                 }
-
                 @Deprecated("Deprecated in Java")
                 override fun onStatusChanged(p: String?, s: Int, e: Bundle?) {}
                 override fun onProviderEnabled(p: String) {}
                 override fun onProviderDisabled(p: String) {}
             }
 
-            // Pedir ubicación fresca — mínima distancia 0 para que responda inmediato
             try {
                 locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER,
-                    0L, 0f, listener, Looper.getMainLooper()
-                )
-            } catch (e: SecurityException) { /* sin permiso GPS */ }
+                    LocationManager.GPS_PROVIDER, 0L, 0f, listener, Looper.getMainLooper())
+            } catch (e: SecurityException) {}
 
             try {
                 locationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER,
-                    0L, 0f, listener, Looper.getMainLooper()
-                )
-            } catch (e: SecurityException) { /* sin permiso red */ }
+                    LocationManager.NETWORK_PROVIDER, 0L, 0f, listener, Looper.getMainLooper())
+            } catch (e: SecurityException) {}
 
-            // Timeout de 4 segundos — si no llega ubicación fresca, usar caché limpiada
             mainHandler.postDelayed({
                 if (!responded) {
                     responded = true
                     locationManager.removeUpdates(listener)
-                    // Sin respuesta = no hay mock activo en este momento
                     result.success(false)
                 }
             }, 4000)
 
         } catch (e: Exception) {
             result.error("LOCATION_ERROR", e.message, null)
+        }
+    }
+
+    // ── Detección de Depuración USB (ADB) — NUEVO ──────────────────
+    // Consulta directamente la configuración global del sistema:
+    // Settings.Global.ADB_ENABLED -> 1 significa que la Depuración USB
+    // está activada en Ajustes -> Opciones de desarrollador.
+    private fun checkAdbEnabled(): Boolean {
+        return try {
+            Settings.Global.getInt(
+                contentResolver,
+                Settings.Global.ADB_ENABLED,
+                0
+            ) == 1
+        } catch (e: Exception) {
+            false
         }
     }
 }

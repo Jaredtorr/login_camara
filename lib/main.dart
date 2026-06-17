@@ -1,31 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'fcm_service.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
+import 'security_check.dart';
+import 'security_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inicializar Firebase (todas las plataformas)
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // FCM no está disponible en web
-  if (!kIsWeb) {
-    await FcmService.init();
-  }
-
-  runApp(
-    DevicePreview(
-      enabled: true, // cambia a false para producción
-      builder: (context) => const MyApp(),
-    ),
-  );
+  await Firebase.initializeApp();
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -36,16 +19,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Login Seguro',
       debugShowCheckedModeBanner: false,
-      useInheritedMediaQuery: true,
-      locale: DevicePreview.locale(context),
-      builder: DevicePreview.appBuilder,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      initialRoute: '/',
+      // SecurityGate intercepta el arranque ANTES de llegar al login
+      home: const SecurityGate(),
       routes: {
-        '/':     (_) => const LoginScreen(),
         '/home': (_) => const HomeScreen(),
       },
     );
